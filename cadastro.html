@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>
+    if (location.protocol === "http:" && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+      location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Criar conta — ProFin Lab</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="signup-page">
+
+  <header class="sg-top">
+    <img src="profinlab-logo.png" alt="ProFin Lab" />
+    <a href="index.html">Já tenho conta &rarr;</a>
+  </header>
+
+  <main class="sg-stage">
+    <div class="sg-flow">
+      <div class="sg-glow" aria-hidden="true"></div>
+      <div class="sg-rail" aria-hidden="true"><i id="sgRail" style="width:20%"></i></div>
+
+      <div class="sg-in">
+
+        <!-- 1 · CONTA -->
+        <section class="sg-col sg-anim" id="sgStepAccount" aria-labelledby="sgAccountHead">
+          <p class="sg-eyebrow"><b>Passo 1</b> de 5 <span></span> Conta</p>
+          <h2 class="sg-head" id="sgAccountHead">Vamos começar pelo seu acesso</h2>
+          <p class="sg-lede">Enviamos um código para confirmar o e-mail. A conta só é criada depois do pagamento.</p>
+
+          <form id="sgAccountForm" novalidate>
+            <label class="sg-label" for="sgName">Seu nome</label>
+            <input class="sg-input" type="text" id="sgName" autocomplete="name" placeholder="Nome e sobrenome" required />
+
+            <label class="sg-label" for="sgEmail">E-mail corporativo</label>
+            <input class="sg-input" type="email" id="sgEmail" autocomplete="email" placeholder="voce@empresa.com.br" required />
+            <p class="sg-hint" id="sgEmailHint">É para lá que vai o código e, depois, o convite de acesso.</p>
+
+            <label class="sg-terms">
+              <input type="checkbox" id="sgTerms" required />
+              <span>Li e aceito os <a class="sg-lnk" href="termos.html" target="_blank" rel="noopener">Termos de Uso</a>
+              e a <a class="sg-lnk" href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>,
+              incluindo o tratamento de dados financeiros descrito nela.</span>
+            </label>
+
+            <button class="sg-btn" type="submit" id="sgAccountSubmit">Enviar código</button>
+            <p class="sg-err" id="sgAccountError" role="alert"></p>
+          </form>
+        </section>
+
+        <!-- 2 · CÓDIGO -->
+        <section class="sg-col sg-anim" id="sgStepCode" hidden aria-labelledby="sgCodeHead">
+          <p class="sg-eyebrow"><b>Passo 2</b> de 5 <span></span> Verificação</p>
+          <h2 class="sg-head" id="sgCodeHead">Digite o código que enviamos</h2>
+          <p class="sg-lede">Seis dígitos, válidos por 15 minutos, enviados para <b id="sgCodeEmail"></b>.</p>
+
+          <form id="sgCodeForm" novalidate>
+            <div class="sg-otp" id="sgOtp">
+              <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Dígito 1" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 2" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 3" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 4" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 5" />
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Dígito 6" />
+            </div>
+
+            <div class="sg-btns">
+              <button class="sg-btn ghost" type="button" data-sg-back="sgStepAccount">Voltar</button>
+              <button class="sg-btn" type="submit" id="sgCodeSubmit">Confirmar</button>
+            </div>
+            <p class="sg-err" id="sgCodeError" role="alert"></p>
+          </form>
+
+          <p class="sg-resend">Não chegou? <button type="button" id="sgResend">Reenviar código</button></p>
+        </section>
+
+        <!-- 3 · EMPRESA -->
+        <section class="sg-col sg-anim" id="sgStepCompany" hidden aria-labelledby="sgCompanyHead">
+          <p class="sg-eyebrow"><b>Passo 3</b> de 5 <span></span> Empresa</p>
+          <h2 class="sg-head" id="sgCompanyHead">Qual empresa vamos acompanhar?</h2>
+          <p class="sg-lede">Este é o primeiro CNPJ da sua organização. Outros CNPJs são adicionados depois pela nossa equipe.</p>
+
+          <form id="sgCompanyForm" novalidate>
+            <label class="sg-label" for="sgCompanyName">Razão social ou nome fantasia</label>
+            <input class="sg-input" type="text" id="sgCompanyName" autocomplete="organization" placeholder="Empresa Ltda" required />
+
+            <div class="sg-row2">
+              <div>
+                <label class="sg-label" for="sgCnpj">CNPJ</label>
+                <input class="sg-input" type="text" id="sgCnpj" inputmode="numeric" placeholder="00.000.000/0001-00" required />
+              </div>
+              <div>
+                <label class="sg-label" for="sgPhone">Telefone</label>
+                <input class="sg-input" type="tel" id="sgPhone" autocomplete="tel" placeholder="(11) 99999-0000" />
+              </div>
+            </div>
+            <p class="sg-hint" id="sgCnpjHint">Usamos o CNPJ para emitir a nota fiscal e separar as contas bancárias por empresa.</p>
+
+            <div class="sg-btns">
+              <button class="sg-btn ghost" type="button" data-sg-back="sgStepCode">Voltar</button>
+              <button class="sg-btn" type="submit">Continuar</button>
+            </div>
+            <p class="sg-err" id="sgCompanyError" role="alert"></p>
+          </form>
+        </section>
+
+        <!-- 4 · PLANO -->
+        <section class="sg-col widest sg-anim" id="sgStepPlan" hidden aria-labelledby="sgPlanHead">
+          <p class="sg-eyebrow"><b>Passo 4</b> de 5 <span></span> Plano</p>
+          <h2 class="sg-head" id="sgPlanHead">Escolha o plano</h2>
+          <p class="sg-lede">O limite que importa é o de contas bancárias conectadas. Dá para mudar de plano depois, dentro do portal.</p>
+
+          <div class="sg-plans" id="sgPlans" role="group" aria-label="Planos disponíveis"></div>
+
+          <p class="sg-over">Mais contas bancárias do que cabe aqui?
+            <button type="button" id="sgSalesToggle">Falar com o time comercial &rarr;</button></p>
+
+          <div class="sg-sales" id="sgSales">
+            <h3>Volume acima de 50 contas</h3>
+            <p>A partir daí o desenho é feito junto com você — número de CNPJs, usuários e volume de classificação por IA.
+              Escreva para <a class="sg-lnk" id="sgSalesEmail" href="mailto:comercial@profinlab.com.br">comercial@profinlab.com.br</a>
+              que a equipe responde com uma proposta.</p>
+          </div>
+
+          <div class="sg-btns" style="max-width:460px">
+            <button class="sg-btn ghost" type="button" data-sg-back="sgStepCompany">Voltar</button>
+            <button class="sg-btn" type="button" id="sgPlanNext" disabled>Continuar</button>
+          </div>
+          <p class="sg-err" id="sgPlanError" role="alert"></p>
+        </section>
+
+        <!-- 5 · PAGAMENTO -->
+        <section class="sg-col sg-anim" id="sgStepPay" hidden aria-labelledby="sgPayHead">
+          <p class="sg-eyebrow"><b>Passo 5</b> de 5 <span></span> Pagamento</p>
+          <h2 class="sg-head" id="sgPayHead">Confira e finalize</h2>
+          <p class="sg-lede">Vamos abrir uma janela do Asaas, nosso processador, para você pagar. Nenhum dado do cartão
+            passa pelo portal. Esta página continua aqui, aguardando a confirmação.</p>
+
+          <dl class="sg-sum" id="sgSummary"></dl>
+
+          <button class="sg-btn" type="button" id="sgPayGo">Ir para o pagamento</button>
+          <div class="sg-btns" style="grid-template-columns:1fr">
+            <button class="sg-btn ghost" type="button" data-sg-back="sgStepPlan">Voltar</button>
+          </div>
+          <p class="sg-err" id="sgPayError" role="alert"></p>
+        </section>
+
+        <!-- LIBERANDO -->
+        <section class="sg-col sg-anim sg-wait" id="sgStepWaiting" hidden aria-labelledby="sgWaitHead">
+          <div class="sg-spin" aria-hidden="true"></div>
+          <h2 class="sg-head" id="sgWaitHead">Confirmando o pagamento</h2>
+          <p class="sg-lede">Assim que o Asaas confirmar, criamos sua organização e enviamos o convite de acesso por e-mail.
+            Pode fechar esta página — o e-mail chega de qualquer forma.</p>
+
+          <p class="sg-hint" id="sgWaitRetry" hidden>Fechou a janela sem pagar?
+            <!-- Sem rel="noopener" de propósito: é o `window.opener` que deixa a
+                 janela de pagamento avisar esta página quando volta do Asaas. -->
+            <a class="sg-lnk" id="sgWaitRetryLink" href="#" target="profinlabPagamento">Reabrir o pagamento</a>.
+            É a mesma cobrança — nada é cobrado duas vezes.</p>
+        </section>
+
+        <!-- PRONTO -->
+        <section class="sg-col sg-anim sg-wait" id="sgStepDone" hidden aria-labelledby="sgDoneHead">
+          <div class="sg-tick" aria-hidden="true">&check;</div>
+          <h2 class="sg-head" id="sgDoneHead">Tudo certo</h2>
+          <p class="sg-lede">Enviamos o convite de acesso para <b id="sgDoneEmail"></b>. Clique no link do e-mail para
+            definir sua senha e entrar no portal.</p>
+
+          <div class="sg-next" style="text-align:left;width:100%">
+            <p class="sg-next-h">Primeiros passos</p>
+            <div class="sg-todo">
+              <span class="sg-todo-n">1</span>
+              <span><b>Definir a senha</b><i>Pelo link do convite que acabou de chegar.</i></span>
+              <span aria-hidden="true">&rarr;</span>
+            </div>
+            <div class="sg-todo">
+              <span class="sg-todo-n">2</span>
+              <span><b>Conectar as contas bancárias</b><i>Em Configurações &rsaquo; Integrações, via Open Finance.</i></span>
+              <span aria-hidden="true">&rarr;</span>
+            </div>
+            <div class="sg-todo">
+              <span class="sg-todo-n">3</span>
+              <span><b>Convidar o time</b><i>Em Configurações &rsaquo; Usuários &amp; Permissões.</i></span>
+              <span aria-hidden="true">&rarr;</span>
+            </div>
+          </div>
+
+          <a class="sg-btn" href="index.html" style="text-align:center;text-decoration:none;display:block">Ir para o login</a>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js"></script>
+  <script src="cadastro.js?v=20260923-1"></script>
+</body>
+</html>

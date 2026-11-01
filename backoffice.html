@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>
+    if (location.protocol === "http:" && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+      location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Backoffice — Profix Admin</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .token-org-row:hover td { background: rgba(255,255,255,.03); }
+    .token-org-row-selected td { background: rgba(155,134,251,.08) !important; }
+  </style>
+</head>
+<body class="dashboard-page admin-page">
+
+  <header class="appbar admin-appbar">
+    <div class="appbar-brand"><span class="brand-mark admin-mark">PX</span>Profix Admin · Backoffice</div>
+    <div class="appbar-right">
+      <span id="adminEmailDisplay"></span>
+      <button id="adminLogoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <div class="topbar">
+    <div class="sub-row">
+      <div>
+        <h1>Organizações na plataforma</h1>
+        <div class="sub">Gestão de organizações, usuários, consumo, execuções e logs</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabnav">
+    <div class="tab active" onclick="goBackofficeTab(0,this)">Organizações</div>
+    <div class="tab" onclick="goBackofficeTab(1,this)">Consumo de Tokens &amp; Logs</div>
+  </nav>
+
+  <!-- ORGANIZAÇÕES -->
+  <div class="page active">
+    <div class="kpi-row" id="adminKpis"></div>
+
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Organizações</div><div class="cs">Clique em uma organização para ver detalhes</div></div>
+        <button class="btn-primary" id="newOrgBtn" style="padding:6px 16px;font-size:12px">+ Nova Organização</button>
+      </div>
+      <table class="saldo-table">
+        <thead><tr><th style="text-align:left">Organização</th><th>Plano</th><th>Status</th><th>Usuários</th><th>Documentos</th><th>Análises</th><th>Concluídas</th></tr></thead>
+        <tbody id="orgTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div><div class="ct">Agentes por tipo de documento</div><div class="cs">Configuração global — aplica a todas as organizações</div></div></div>
+      <table class="saldo-table">
+        <thead><tr><th style="text-align:left">Tipo de documento</th><th style="text-align:left">Agente</th><th style="text-align:left">Modelo</th><th>Formato</th><th></th></tr></thead>
+        <tbody id="agentTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CONSUMO DE TOKENS & LOGS -->
+  <div class="page" id="b1">
+    <div style="background:rgba(240,169,60,.1);border:1px solid rgba(240,169,60,.3);border-radius:8px;padding:10px 16px;font-size:12.5px;color:#f0a93c;margin-bottom:18px">
+      ⚠ Hoje não há bloqueio de tokens — o limite abaixo é apenas informativo, ele não impede novas chamadas de IA quando excedido.
+    </div>
+
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Consumo de tokens por organização</div><div class="cs">Soma de tokens usados nas chamadas de IA (análise, classificação, chat, projeção) no período selecionado · clique em uma organização para filtrar os logs abaixo</div></div>
+        <input type="month" id="tokenMonthPicker" class="form-input" style="width:auto;padding:6px 10px;font-size:13px" />
+      </div>
+      <table class="saldo-table">
+        <thead><tr>
+          <th style="text-align:left">Organização</th>
+          <th>Tokens usados</th>
+          <th>Limite mensal</th>
+          <th>% usado</th>
+          <th style="text-align:left">Status</th>
+        </tr></thead>
+        <tbody id="tokenTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Logs &amp; execuções recentes</div><div class="cs" id="logsFilterLabel">Todas as organizações</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="date" id="logsDateFrom" class="form-input" style="width:auto;padding:6px 10px;font-size:12px" title="De" />
+          <span style="color:var(--muted);font-size:12px">até</span>
+          <input type="date" id="logsDateTo" class="form-input" style="width:auto;padding:6px 10px;font-size:12px" title="Até" />
+          <button type="button" class="btn-secondary" id="logsClearFilter" style="padding:6px 12px;font-size:12px">Limpar filtro</button>
+        </div>
+      </div>
+      <table class="saldo-table">
+        <thead><tr><th style="text-align:left">Quando</th><th style="text-align:left">Organização</th><th style="text-align:left">Ação</th><th style="text-align:left">Autor</th><th>Status</th><th>Tokens</th></tr></thead>
+        <tbody id="logTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="orgModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal modal-xwide">
+      <div class="modal-head">
+        <div class="ct" id="orgModalTitle">Organização</div>
+        <button id="orgModalClose" class="chat-close">✕</button>
+      </div>
+      <div id="orgModalBody"></div>
+    </div>
+  </div>
+
+  <div id="inviteModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct" id="inviteModalTitle">Convidar usuário</div>
+        <button id="inviteModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="inviteForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">E-mail</label>
+          <input type="email" id="inviteEmail" class="form-input" placeholder="usuario@empresa.com" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Nome</label>
+          <input type="text" id="inviteName" class="form-input" placeholder="Nome do usuário" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Perfil</label>
+          <select id="inviteRole" class="form-input">
+            <option value="Admin">Admin</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="Visualizador" selected>Visualizador</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Permissões</label>
+          <div class="permissions-grid" id="invitePermsGrid">
+            <label class="perm-item"><input type="checkbox" value="dashboard" checked /> Visão Financeira Gerencial</label>
+            <label class="perm-item"><input type="checkbox" value="resultados" /> Resultados</label>
+            <label class="perm-item"><input type="checkbox" value="documentos" checked /> Documentos</label>
+            <label class="perm-item"><input type="checkbox" value="conhecimento" /> Tutorial</label>
+            <label class="perm-item"><input type="checkbox" value="configuracoes" /> Configurações</label>
+            <label class="perm-item"><input type="checkbox" value="chat" /> Chat CFO</label>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" id="inviteSubmit" style="width:100%;margin-top:4px">Enviar convite</button>
+        <p class="error" id="inviteError" style="margin-top:8px"></p>
+        <p id="inviteSuccess" style="display:none;color:var(--mint);margin-top:8px;font-size:13px;text-align:center"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit agent modal -->
+  <div id="agentModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal modal-wide">
+      <div class="modal-head">
+        <div class="ct">Editar agente</div>
+        <button id="agentModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="agentForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Tipo de documento</label>
+          <input type="text" id="agentDocType" class="form-input" readonly style="opacity:.6" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Nome do agente</label>
+          <input type="text" id="agentLabel" class="form-input" placeholder="Ex: Leitor Balancete" required />
+        </div>
+        <div class="form-field" style="display:flex;gap:12px">
+          <div style="flex:1">
+            <label class="form-label">Modelo</label>
+            <select id="agentModel" class="form-input">
+              <option value="claude-opus-4-8">claude-opus-4-8</option>
+              <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
+              <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label class="form-label">Max tokens</label>
+            <input type="number" id="agentMaxTokens" class="form-input" min="512" max="16000" step="512" />
+          </div>
+          <div style="flex:1">
+            <label class="form-label">Formato de resposta</label>
+            <select id="agentResponseFormat" class="form-input">
+              <option value="structured_text">structured_text</option>
+              <option value="json">json</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Prompt do sistema</label>
+          <textarea id="agentPrompt" class="form-input" rows="16" required style="font-family:monospace;font-size:12px;resize:vertical"></textarea>
+        </div>
+        <button type="submit" class="btn-primary" id="agentSubmit" style="width:100%;margin-top:4px">Salvar configuração</button>
+        <p class="error" id="agentError" style="margin-top:8px"></p>
+        <p id="agentSuccess" style="display:none;color:var(--mint);margin-top:8px;font-size:13px;text-align:center"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete org modal -->
+  <div id="deleteOrgModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct">Apagar organização</div>
+        <button id="deleteOrgModalClose" class="chat-close">✕</button>
+      </div>
+      <p class="cs" id="deleteOrgWarning" style="margin-bottom:14px"></p>
+      <form id="deleteOrgForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Digite <strong id="deleteOrgNameTarget"></strong> para confirmar</label>
+          <input type="text" id="deleteOrgConfirmInput" class="form-input" autocomplete="off" required />
+        </div>
+        <button type="submit" class="btn-danger" id="deleteOrgSubmit" style="width:100%;margin-top:4px" disabled>Apagar definitivamente</button>
+        <p class="error" id="deleteOrgError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- New org modal -->
+  <div id="newOrgModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct">Nova Organização</div>
+        <button id="newOrgModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="newOrgForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Nome da organização</label>
+          <input type="text" id="newOrgName" class="form-input" placeholder="Ex: Empresa XYZ" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Plano</label>
+          <select id="newOrgPlan" class="form-input">
+            <option value="essencial">Essencial</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Status</label>
+          <select id="newOrgStatus" class="form-input">
+            <option value="trial">Trial</option>
+            <option value="ativa">Ativa</option>
+            <option value="inativa">Inativa</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Limite mensal de tokens <span style="color:var(--muted);font-weight:400">(vazio = sem limite)</span></label>
+          <input type="number" id="newOrgTokenLimit" class="form-input" min="0" step="1000" placeholder="Ex: 500000" />
+        </div>
+        <button type="submit" class="btn-primary" id="newOrgSubmit" style="width:100%;margin-top:4px">Criar organização</button>
+        <p class="error" id="newOrgError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit org modal -->
+  <div id="editOrgModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct">Editar organização</div>
+        <button id="editOrgModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="editOrgForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Nome da organização</label>
+          <input type="text" id="editOrgName" class="form-input" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Plano</label>
+          <select id="editOrgPlan" class="form-input">
+            <option value="essencial">Essencial</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Status</label>
+          <select id="editOrgStatus" class="form-input">
+            <option value="trial">Trial</option>
+            <option value="ativa">Ativa</option>
+            <option value="inativa">Inativa</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Limite mensal de tokens <span style="color:var(--muted);font-weight:400">(vazio = sem limite)</span></label>
+          <input type="number" id="editOrgTokenLimit" class="form-input" min="0" step="1000" placeholder="Ex: 500000" />
+        </div>
+        <button type="submit" class="btn-primary" id="editOrgSubmit" style="width:100%;margin-top:4px">Salvar</button>
+        <p class="error" id="editOrgError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- User row action menu (backoffice) -->
+  <div id="userRowMenu" style="display:none;position:fixed;z-index:9999;background:#1b1d27;border:1px solid rgba(255,255,255,.13);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:176px;padding:4px 0">
+    <button type="button" class="row-menu-item" id="userMenuLogin">Login como</button>
+    <button type="button" class="row-menu-item" id="userMenuEdit">Editar</button>
+    <button type="button" class="row-menu-item" id="userMenuLinks">Links de acesso</button>
+    <button type="button" class="row-menu-item row-menu-item-danger" id="userMenuDelete">Excluir</button>
+  </div>
+
+  <!-- User access links modal (backoffice) -->
+  <div id="userAccessLinksModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-head">
+        <div class="ct" id="userAccessLinksTitle">Links de acesso</div>
+        <button id="userAccessLinksClose" class="chat-close">✕</button>
+      </div>
+      <div id="userAccessLinksBody" style="padding:4px 0 8px"></div>
+      <p class="error" id="userAccessLinksError" style="margin-top:4px"></p>
+    </div>
+  </div>
+
+  <!-- Edit user modal (backoffice) -->
+  <div id="editUserModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct" id="editUserModalTitle">Editar usuário</div>
+        <button id="editUserModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="editUserForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Perfil</label>
+        <label class="form-label">Cobrança
+          <span class="hint">(quem emite a fatura desta organização)</span>
+          <select id="editOrgBillingMode" class="form-input">
+            <option value="portal">Pelo portal — assinatura no cartão via Asaas</option>
+            <option value="external">Por fora — boleto enviado pela ProFin Lab</option>
+          </select>
+        </label>
+        <p class="cs" style="margin:-4px 0 4px">Em "por fora", o portal não mostra aviso de atraso nem bloqueia o acesso: ele não recebe confirmação de pagamento.</p>
+          <select id="editUserRole" class="form-input">
+            <option value="Admin">Admin</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="Visualizador">Visualizador</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Permissões</label>
+          <div class="permissions-grid" id="editUserPermsGrid">
+            <label class="perm-item"><input type="checkbox" value="dashboard" /> Visão Financeira Gerencial</label>
+            <label class="perm-item"><input type="checkbox" value="resultados" /> Resultados</label>
+            <label class="perm-item"><input type="checkbox" value="documentos" /> Documentos</label>
+            <label class="perm-item"><input type="checkbox" value="conhecimento" /> Tutorial</label>
+            <label class="perm-item"><input type="checkbox" value="configuracoes" /> Configurações</label>
+            <label class="perm-item"><input type="checkbox" value="chat" /> Chat CFO</label>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" id="editUserSubmit" style="width:100%;margin-top:4px">Salvar alterações</button>
+        <p class="error" id="editUserError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add knowledge modal (used from org detail) -->
+  <div id="addKnowledgeModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct">Adicionar item de conhecimento</div>
+        <button id="addKnowledgeModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="addKnowledgeForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Título</label>
+          <input type="text" id="addKnowledgeTitle" class="form-input" placeholder="Ex: Como ler a projeção de 13 semanas" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Categoria</label>
+          <select id="addKnowledgeCategory" class="form-input">
+            <option>Treinamento</option>
+            <option>FAQ</option>
+            <option>Estudo</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Conteúdo</label>
+          <textarea id="addKnowledgeBody" class="form-input" rows="5" placeholder="Escreva o conteúdo do item." required style="resize:vertical"></textarea>
+        </div>
+        <button type="submit" class="btn-primary" id="addKnowledgeSubmit" style="width:100%;margin-top:4px">Salvar item</button>
+        <p class="error" id="addKnowledgeError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="companyModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct" id="companyModalTitle">Cadastrar empresa</div>
+        <button id="companyModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="companyForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Razão social</label>
+          <input type="text" id="companyName" class="form-input" placeholder="Ex: TBRH Recursos Humanos LTDA" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">CNPJ</label>
+          <input type="text" id="companyCnpj" class="form-input" placeholder="00.000.000/0000-00" inputmode="numeric" required />
+          <div class="cs" id="companyCnpjHint" style="margin-top:6px">Só a ProFix cadastra CNPJ. O cliente escolhe entre os já cadastrados.</div>
+        </div>
+        <button type="submit" class="btn-primary" id="companySubmit" style="width:100%;margin-top:4px">Salvar empresa</button>
+        <p class="error" id="companyError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js?v=2"></script>
+  <script src="platform.js?v=20260927-1"></script>
+  <script src="backoffice.js?v=20261008-1"></script>
+</body>
+</html>

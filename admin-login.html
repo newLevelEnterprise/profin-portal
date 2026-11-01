@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>
+    if (location.protocol === "http:" && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+      location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Painel Administrativo — Profix</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+</head>
+<body class="login-page">
+  <div class="login-wrapper">
+    <div class="login-brand admin-brand">
+      <div class="brand-mark">PX</div>
+      <h1>Profix Admin</h1>
+      <p>Backoffice interno — gestão das organizações, usuários, consumo e execuções da plataforma.</p>
+      <ul class="brand-points">
+        <li>Visão de todas as organizações</li>
+        <li>Consumo e execuções por org</li>
+        <li>Logs e configurações</li>
+      </ul>
+    </div>
+
+    <div class="login-card">
+      <h2>Acesso administrativo</h2>
+      <p class="login-sub">Restrito a contas marcadas como administradoras Profix.</p>
+
+      <form id="adminLoginForm" novalidate>
+        <label for="adminEmail">E-mail</label>
+        <input type="email" id="adminEmail" placeholder="voce@profixlab.com.br" required />
+
+        <label for="adminPassword">Senha</label>
+        <div class="password-field">
+          <input type="password" id="adminPassword" placeholder="••••••••" required />
+          <button type="button" class="password-toggle-btn" id="adminPasswordToggleBtn" aria-label="Mostrar senha"></button>
+        </div>
+
+        <button type="submit" id="adminLoginSubmit">Entrar no backoffice</button>
+        <p class="error" id="adminLoginError"></p>
+      </form>
+
+      <p class="login-footnote"><a href="index.html" class="admin-link">← Voltar ao login da plataforma</a></p>
+    </div>
+  </div>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js"></script>
+  <script>
+    (function () {
+      const input = document.getElementById("adminPassword");
+      const btn = document.getElementById("adminPasswordToggleBtn");
+      const EYE = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+      const EYE_OFF = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a21.6 21.6 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 7 11 7a21.6 21.6 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+      btn.innerHTML = EYE;
+      btn.addEventListener("click", () => {
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.innerHTML = show ? EYE_OFF : EYE;
+        btn.setAttribute("aria-label", show ? "Ocultar senha" : "Mostrar senha");
+      });
+    })();
+
+    document.getElementById("adminLoginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("adminEmail").value.trim();
+      const password = document.getElementById("adminPassword").value;
+      const errorEl = document.getElementById("adminLoginError");
+      errorEl.textContent = "";
+      if (!email || !password) {
+        errorEl.textContent = "Informe e-mail e senha.";
+        return;
+      }
+
+      const submitBtn = document.getElementById("adminLoginSubmit");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Entrando...";
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error || !data.session) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Entrar no backoffice";
+        errorEl.textContent = "E-mail ou senha inválidos.";
+        return;
+      }
+
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("is_profix_admin")
+        .eq("id", data.session.user.id)
+        .single();
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Entrar no backoffice";
+
+      if (!profile || !profile.is_profix_admin) {
+        await supabaseClient.auth.signOut();
+        errorEl.textContent = "Esta conta não tem acesso administrativo Profix.";
+        return;
+      }
+
+      window.location.href = "backoffice.html";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      if (window.top === window) {
+        location.replace("app-shell.html?page=" + encodeURIComponent(location.pathname.split("/").pop()));
+        return;
+      }
+      document.documentElement.classList.add("in-frame");
+      window.top.postMessage({ type: "fp-nav", page: location.pathname.split("/").pop() }, window.location.origin);
+    })();
+  </script>
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Logs — Profix Admin</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-page">
+
+  <div class="app-layout">
+    <aside id="sidebarNav" class="sidebar"></aside>
+    <div class="app-main">
+
+      <div class="topbar">
+        <div class="sub-row">
+          <div>
+            <h1>Logs de execução</h1>
+            <div class="sub">Chamadas às edge functions — análises, chat CFO e projeções</div>
+          </div>
+          <button id="btnRefresh" class="btn-secondary" style="margin-left:auto;padding:6px 14px;font-size:13px">↺ Atualizar</button>
+        </div>
+      </div>
+
+      <div class="page active" id="logsContainer">
+        <div style="text-align:center;padding:60px 24px;color:var(--muted)">Carregando…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js"></script>
+  <script src="platform.js?v=20260927-1"></script>
+  <script src="logs.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      if (window.top === window) {
+        location.replace("app-shell.html?page=" + encodeURIComponent(location.pathname.split("/").pop()));
+        return;
+      }
+      document.documentElement.classList.add("in-frame");
+      window.top.postMessage({ type: "fp-nav", page: location.pathname.split("/").pop() }, window.location.origin);
+    })();
+  </script>
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Tutorial — ProFin Lab</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-page">
+
+  <div class="app-layout">
+  <aside id="sidebarNav" class="sidebar"></aside>
+  <div class="app-main">
+
+
+  <div class="topbar">
+    <div class="sub-row">
+      <div>
+        <h1>Tutorial</h1>
+        <div class="sub">Treinamentos, estudos e FAQs compartilhados com a sua organização</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page active">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Itens de conhecimento</div><div class="cs" id="knowledgeCountSub">Carregando...</div></div>
+      </div>
+      <div class="card-row" id="knowledgeGrid" style="grid-template-columns:1fr 1fr"></div>
+    </div>
+  </div>
+
+  </div>
+  </div>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js"></script>
+  <script src="platform.js?v=20260927-1"></script>
+  <script src="chat-widget.js"></script>
+  <script src="knowledge.js"></script>
+</body>
+</html>

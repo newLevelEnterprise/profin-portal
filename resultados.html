@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      if (window.top === window) {
+        location.replace("app-shell.html?page=" + encodeURIComponent(location.pathname.split("/").pop()));
+        return;
+      }
+      document.documentElement.classList.add("in-frame");
+      window.top.postMessage({ type: "fp-nav", page: location.pathname.split("/").pop() }, window.location.origin);
+    })();
+  </script>
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Resultados Financeiros — ProFin Lab</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="vendor/chart.umd.min.js?v=4.4.1"></script>
+  <script src="vendor/xlsx.full.min.js?v=0.18.5"></script>
+  <style>
+    @keyframes proj-spin { to { transform: rotate(360deg); } }
+    .proj-spinner {
+      width: 20px; height: 20px; flex-shrink: 0;
+      border: 2.5px solid rgba(155,134,251,.2);
+      border-top-color: #9b86fb;
+      border-radius: 50%;
+      animation: proj-spin .75s linear infinite;
+    }
+    .col-proj th, .col-proj { font-style: italic; opacity: .78; }
+    .badge-ia {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(167,139,250,.25);
+      color: #a78bfa;
+      font-size: 9px;
+      font-style: normal;
+      font-weight: 600;
+      vertical-align: middle;
+      line-height: 1.4;
+    }
+    .tbl-section td { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: rgba(255,255,255,.03); padding-top: 14px; }
+    .tbl-bold td { font-weight: 600; }
+    .analysis-table td, .analysis-table th { white-space: nowrap; }
+    .proj-warning {
+      background: rgba(245,158,11,.1);
+      border: 1px solid rgba(245,158,11,.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: #f59e0b;
+      margin-bottom: 18px;
+    }
+  </style>
+</head>
+<body class="dashboard-page">
+
+  <div class="app-layout">
+    <aside id="sidebarNav" class="sidebar"></aside>
+    <div class="app-main">
+
+      <div class="topbar">
+        <div class="sub-row">
+          <div>
+            <h1>Resultados Financeiros</h1>
+            <div class="sub">DRE · Balanço Patrimonial · Fluxo de Caixa (método indireto) — por período contábil</div>
+          </div>
+          <button id="btnExportXlsx" class="btn-secondary" style="padding:7px 16px;font-size:13px;margin-left:auto">Exportar XLSX</button>
+          <button id="btnGerarProjecao" class="btn-primary" style="padding:7px 16px;font-size:13px">+ Gerar projeção</button>
+        </div>
+      </div>
+
+      <div class="page active" id="resContainer">
+        <div style="text-align:center;padding:60px 24px;color:var(--muted)">Carregando…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PROJECTION MODAL ── -->
+  <div id="projModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-head">
+        <div class="ct">Gerar projeção com IA</div>
+        <button id="projModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="projForm">
+        <p style="font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.6">
+          A IA projeta automaticamente os <strong style="color:var(--ink)">meses restantes do ano</strong> com base nos balancetes já cadastrados.
+          As projeções aparecem como colunas em itálico nas tabelas.
+        </p>
+        <label>% de crescimento na receita (opcional)
+          <input type="number" id="projGrowth" value="5" min="-50" max="200" step="0.5"
+            style="margin-top:6px" placeholder="5" />
+        </label>
+        <p style="font-size:12px;color:var(--muted);margin:6px 0 16px">
+          Deixe em 5% para manter a tendência histórica com crescimento moderado.
+        </p>
+        <div id="projProgress" style="display:none;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="proj-spinner"></div>
+            <span id="projProgressLabel" style="font-size:13px;color:var(--muted)">Chamando IA para gerar projeção…</span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="projCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="projSubmit" class="btn-primary">Gerar projeção</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js"></script>
+  <script src="platform.js?v=20260927-1"></script>
+  <script src="chat-widget.js"></script>
+  <script src="resultados.js?v=20260827-1"></script>
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      if (window.top === window) {
+        location.replace("app-shell.html?page=" + encodeURIComponent(location.pathname.split("/").pop()));
+        return;
+      }
+      document.documentElement.classList.add("in-frame");
+      window.top.postMessage({ type: "fp-nav", page: location.pathname.split("/").pop() }, window.location.origin);
+    })();
+  </script>
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Configurações — ProFin Lab</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-page">
+
+  <div class="app-layout">
+  <aside id="sidebarNav" class="sidebar"></aside>
+  <div class="app-main">
+
+
+  <div class="topbar">
+    <div class="sub-row">
+      <div>
+        <h1>Configurações</h1>
+        <div class="sub">Integrações, usuários e permissões, e os agentes classificadores de IA</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabnav">
+    <div class="tab active" onclick="goSettingsTab(0,this)">Integrações</div>
+    <div class="tab" onclick="goSettingsTab(1,this)">Usuários &amp; Permissões</div>
+    <div class="tab" onclick="goSettingsTab(2,this)">Agentes Classificadores</div>
+    <div class="tab" id="viewsTab" style="display:none" onclick="goSettingsTab(3,this)">Visões</div>
+    <!-- Faturamento traz valor pago e link de recibo, que é assunto de Admin.
+         Fica escondido por padrão e settings.js só mostra para quem é Admin da
+         organização (ou admin ProFix); a policy de org_invoices barra de novo
+         no banco, então esconder aqui é conforto, não controle de acesso. -->
+    <div class="tab" id="billingTab" style="display:none" onclick="goSettingsTab(4,this)">Cobrança</div>
+  </nav>
+
+  <!-- INTEGRAÇÕES -->
+  <div class="page active" id="s0">
+    <div class="card-row" id="integrationsGrid" style="grid-template-columns:1fr 1fr"></div>
+  </div>
+
+  <!-- USUÁRIOS & PERMISSÕES -->
+  <div class="page" id="s1">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Usuários da organização</div><div class="cs" id="userCountSub">Carregando...</div></div>
+        <button id="addUserBtn" class="btn-primary">+ Adicionar usuário</button>
+      </div>
+      <table class="saldo-table">
+        <thead><tr><th style="text-align:left">Nome</th><th style="text-align:left">E-mail</th><th>Papel</th><th>Permissões</th><th>Status</th><th></th></tr></thead>
+        <tbody id="userTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- USER ROW ACTION MENU -->
+  <div id="userRowMenu" style="display:none;position:fixed;z-index:9999;background:#1b1d27;border:1px solid rgba(255,255,255,.13);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:176px;padding:4px 0">
+    <button type="button" class="row-menu-item" id="userMenuEdit">Editar</button>
+    <button type="button" class="row-menu-item" id="userMenuLinks">Links de acesso</button>
+  </div>
+
+  <!-- USER ACCESS LINKS MODAL -->
+  <div id="userAccessLinksModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-head">
+        <div class="ct" id="userAccessLinksTitle">Links de acesso</div>
+        <button id="userAccessLinksClose" class="chat-close">✕</button>
+      </div>
+      <div id="userAccessLinksBody" style="padding:4px 0 8px"></div>
+      <p class="error" id="userAccessLinksError" style="margin-top:4px"></p>
+    </div>
+  </div>
+
+  <!-- AGENTES CLASSIFICADORES (Estrutura de Resultados / Posição por Natureza / Clusterização) -->
+  <div class="page" id="s2">
+    <nav class="tabnav agents-tabnav" style="margin-top:0;padding:0 0 16px">
+      <div class="tab active" onclick="goAgentsSubTab('schema',this)">Estrutura de Resultados</div>
+      <div class="tab" onclick="goAgentsSubTab('nature',this)">Posição por Natureza</div>
+      <div class="tab" onclick="goAgentsSubTab('cluster',this)">Clusterização de Fornecedores</div>
+    </nav>
+
+    <!-- ESTRUTURA DE RESULTADOS -->
+    <div class="agents-subpage" id="agentsSubSchema">
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch">
+          <div>
+            <div class="ct">Estrutura de Resultados</div>
+            <div class="cs">Configure as subcontas de DRE, Balanço e DFC que a IA usará para classificar os balancetes</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="btnResetSchema" class="btn-secondary" style="font-size:12px">Restaurar padrão</button>
+            <button id="btnAddNode" class="btn-primary" style="padding:6px 14px;font-size:12px">+ Adicionar conta</button>
+          </div>
+        </div>
+        <nav class="tabnav" style="margin-top:0;padding:0 0 12px">
+          <div class="tab active" onclick="goSchemaTab('dre',this)">DRE</div>
+          <div class="tab" onclick="goSchemaTab('balanco',this)">Balanço</div>
+          <div class="tab" onclick="goSchemaTab('dfc',this)">DFC</div>
+        </nav>
+        <div id="schemaNodesList">
+          <div style="text-align:center;color:var(--muted);padding:24px">Carregando…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSIÇÃO POR NATUREZA -->
+    <div class="agents-subpage" id="agentsSubNature" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch">
+          <div>
+            <div class="ct">Posição por Natureza</div>
+            <div class="cs">Categorias usadas pela IA para classificar cada transação do Open Finance de acordo com a descrição</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="btnResetNature" class="btn-secondary" style="font-size:12px">Restaurar padrão</button>
+            <button id="btnAddNature" class="btn-primary" style="padding:6px 14px;font-size:12px">+ Adicionar categoria</button>
+          </div>
+        </div>
+        <div id="natureCategoriesList">
+          <div style="text-align:center;color:var(--muted);padding:24px">Carregando…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLUSTERIZAÇÃO DE FORNECEDORES -->
+    <div class="agents-subpage" id="agentsSubCluster" style="display:none">
+      <!-- Só aparece para organização com organizations.erp_payment_import_enabled
+           (ver 20261015150000); para as demais o card nem é exibido. -->
+      <div class="card" id="erpImportCard" style="display:none;margin-bottom:16px">
+        <div class="ch">
+          <div>
+            <div class="ct">Base de pagamentos do ERP</div>
+            <div class="cs">Suba o relatório de títulos baixados do ERP (com a tabela de despesa × natureza na mesma aba). Cada saída do banco que casar com um título por banco, data e valor recebe a natureza do título — e isso tem prioridade sobre regra e IA.</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <input type="file" id="erpImportFile" accept=".xlsb,.xlsx,.xls,.csv" style="display:none" />
+            <button id="btnErpTemplate" class="btn-secondary" style="font-size:12px">Baixar modelo</button>
+            <button id="btnImportErpBase" class="btn-primary" style="padding:6px 14px;font-size:12px">Importar base</button>
+          </div>
+        </div>
+        <div id="erpImportStatus" style="font-size:12.5px;color:var(--muted);padding:0 0 10px"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch">
+          <div>
+            <div class="ct">Clusterização de Fornecedores</div>
+            <div class="cs">Mapeamento de fornecedor/CNPJ para o cluster que deve aparecer nos relatórios — tem prioridade sobre a classificação por IA</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <input type="file" id="clusterImportFile" accept=".xlsx,.xls,.csv" style="display:none" />
+            <button id="btnImportClusters" class="btn-secondary" style="font-size:12px">Importar planilha</button>
+            <button id="btnExportClusters" class="btn-secondary" style="font-size:12px">Exportar</button>
+            <button id="btnAddCluster" class="btn-primary" style="padding:6px 14px;font-size:12px">+ Adicionar regra</button>
+          </div>
+        </div>
+        <div id="clusterImportStatus" style="display:none;font-size:12.5px;color:var(--muted);padding:0 0 10px"></div>
+        <div style="padding:0 0 12px">
+          <input type="text" id="clusterRulesSearch" class="settings-search" placeholder="Buscar por fornecedor, CNPJ/CPF ou cluster…" />
+        </div>
+        <div id="clusterRulesList">
+          <div style="text-align:center;color:var(--muted);padding:24px">Carregando…</div>
+        </div>
+        <div id="clusterRulesPagination"></div>
+      </div>
+
+      <div class="card">
+        <div class="ch">
+          <div>
+            <div class="ct">Clusters disponíveis</div>
+            <div class="cs">Lista de clusters do plano de contas — usada ao criar uma regra manual e pela IA para classificar fornecedores novos automaticamente</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <input type="file" id="clusterCategoryImportFile" accept=".xlsx,.xls,.csv" style="display:none" />
+            <button id="btnImportClusterCategories" class="btn-secondary" style="font-size:12px">Importar planilha</button>
+            <button id="btnExportClusterCategories" class="btn-secondary" style="font-size:12px">Exportar</button>
+            <button id="btnResetClusterCategories" class="btn-secondary" style="font-size:12px">Restaurar padrão</button>
+            <button id="btnAddClusterCategory" class="btn-primary" style="padding:6px 14px;font-size:12px">+ Adicionar cluster</button>
+          </div>
+        </div>
+        <div id="clusterCategoryImportStatus" style="display:none;font-size:12.5px;color:var(--muted);padding:0 0 10px"></div>
+        <div style="padding:0 0 12px">
+          <input type="text" id="clusterCategoriesSearch" class="settings-search" placeholder="Buscar por cluster…" />
+        </div>
+        <div id="clusterCategoriesList">
+          <div style="text-align:center;color:var(--muted);padding:24px">Carregando…</div>
+        </div>
+        <div id="clusterCategoriesPagination"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- VISÕES -->
+  <div class="page" id="s3">
+    <div class="card">
+      <div class="ch">
+        <div>
+          <div class="ct">Visões</div>
+          <div class="cs">Recortes das empresas da organização. A visão selecionada na barra lateral define o que as telas somam.</div>
+        </div>
+        <button class="btn-primary" id="addViewBtn" style="padding:6px 14px;font-size:12px">+ Nova visão</button>
+      </div>
+      <div id="viewsList">
+        <div style="text-align:center;color:var(--muted);padding:24px">Carregando…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NODE EDIT MODAL -->
+  <div id="nodeModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-head">
+        <div class="ct" id="nodeModalTitle">Adicionar conta</div>
+        <button id="nodeModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="nodeForm">
+        <input type="hidden" id="nodeId" value="" />
+        <label>Nome da conta <span style="color:#ff6b6b">*</span>
+          <input type="text" id="nodeName" placeholder="Ex: Receita Bruta" required />
+        </label>
+        <label>Demonstração
+          <select id="nodeStatement">
+            <option value="dre">DRE</option>
+            <option value="balanco">Balanço</option>
+            <option value="dfc">DFC</option>
+          </select>
+        </label>
+        <label>Tipo
+          <select id="nodeType">
+            <option value="analytic">Analítica (classificada pela IA)</option>
+            <option value="synthetic">Sintética (calculada por fórmula)</option>
+          </select>
+        </label>
+        <label>Chave semântica <span class="hint">(opcional — liga esta conta aos gráficos; sobrevive a renomear a conta depois)</span>
+          <select id="nodeSemanticKey">
+            <option value="">Nenhuma</option>
+          </select>
+        </label>
+        <div id="nodeAnalyticFields">
+          <label>Descrição <span class="hint">(a IA usa isso para entender o que classifica aqui)</span>
+            <textarea id="nodeDescription" rows="2" placeholder="Ex: Total de receitas de vendas antes de deduções"></textarea>
+          </label>
+          <label>Exemplos de contas <span class="hint">(opcional)</span>
+            <input type="text" id="nodeExamples" placeholder="Ex: ISS, PIS, COFINS, Simples s/Faturamento" />
+          </label>
+        </div>
+        <div id="nodeSyntheticFields" style="display:none">
+          <label>Fórmula <span class="hint">Use [Nome da conta] para referenciar outras contas</span>
+            <input type="text" id="nodeFormula" placeholder="Ex: [Receita Bruta]-[Deduções da Receita]" />
+          </label>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5">
+            Operadores suportados: + − * /. Ex: <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">[Lucro Bruto]-[Despesas com Pessoal]-[Despesas Administrativas]</code>
+          </div>
+        </div>
+        <label>Ordem <span class="hint">(define posição na tabela)</span>
+          <input type="number" id="nodeSortOrder" value="99" min="1" max="999" />
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="nodeCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="nodeSubmit" class="btn-primary">Salvar</button>
+        </div>
+        <p class="error" id="nodeError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- NATURE CATEGORY EDIT MODAL -->
+  <div id="natureModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-head">
+        <div class="ct" id="natureModalTitle">Adicionar categoria</div>
+        <button id="natureModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="natureForm">
+        <input type="hidden" id="natureId" value="" />
+        <label>Nome da categoria <span style="color:#ff6b6b">*</span>
+          <input type="text" id="natureName" placeholder="Ex: Operacional (FCO)" required />
+        </label>
+        <label>Descrição <span class="hint">(a IA usa isso para entender o que classificar aqui)</span>
+          <textarea id="natureDescription" rows="2" placeholder="Ex: Receitas e despesas do dia a dia da operação"></textarea>
+        </label>
+        <label>Exemplos <span class="hint">(opcional)</span>
+          <input type="text" id="natureExamples" placeholder="Ex: Vendas, fornecedores, folha, impostos correntes" />
+        </label>
+        <label>Ordem <span class="hint">(define posição na tabela)</span>
+          <input type="number" id="natureSortOrder" value="99" min="1" max="999" />
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="natureCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="natureSubmit" class="btn-primary">Salvar</button>
+        </div>
+        <p class="error" id="natureError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- CLUSTER RULE EDIT MODAL -->
+  <div id="clusterModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-head">
+        <div class="ct" id="clusterModalTitle">Adicionar regra</div>
+        <button id="clusterModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="clusterForm">
+        <input type="hidden" id="clusterId" value="" />
+        <label>Nome do fornecedor/cliente <span style="color:#ff6b6b">*</span>
+          <input type="text" id="clusterSupplierName" placeholder="Ex: BANCO SAFRA" required />
+        </label>
+        <label>CNPJ <span class="hint">(opcional, mas recomendado — evita ambiguidade)</span>
+          <input type="text" id="clusterCnpj" placeholder="Ex: 58.160.789/0001-28" />
+        </label>
+        <label>Trecho do histórico <span class="hint">(opcional, refina o match)</span>
+          <input type="text" id="clusterHistorico" placeholder="Ex: JUROS PAGOS" />
+        </label>
+        <label>Cluster <span class="hint">(conta do plano de contas da empresa)</span> <span style="color:#ff6b6b">*</span>
+          <select id="clusterCategoryId" required></select>
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="clusterCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="clusterSubmit" class="btn-primary">Salvar</button>
+        </div>
+        <p class="error" id="clusterError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- CLUSTER CATEGORY EDIT MODAL -->
+  <div id="ccatModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-head">
+        <div class="ct" id="ccatModalTitle">Adicionar cluster</div>
+        <button id="ccatModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="ccatForm">
+        <input type="hidden" id="ccatId" value="" />
+        <label>Nome do cluster <span style="color:#ff6b6b">*</span>
+          <input type="text" id="ccatName" placeholder="Ex: ALUGUEIS" required />
+        </label>
+        <label>Código <span class="hint">(opcional — código interno do plano de contas)</span>
+          <input type="text" id="ccatCode" placeholder="Ex: 005031" />
+        </label>
+        <label>Ordem <span class="hint">(define posição na tabela)</span>
+          <input type="number" id="ccatSortOrder" value="99" min="1" max="999" />
+        </label>
+        <label>Cluster pai <span class="hint">(opcional — agrupa este cluster em "Distribuição por cluster")</span>
+          <select id="ccatParentId">
+            <option value="">— Nenhum (cluster de nível superior) —</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="ccatCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="ccatSubmit" class="btn-primary">Salvar</button>
+        </div>
+        <p class="error" id="ccatError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="userModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct">Adicionar usuário</div>
+        <button id="userModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="userForm">
+        <label>Nome<input type="text" id="userName" required /></label>
+        <label>E-mail<input type="email" id="userEmail" required /></label>
+        <label>Papel
+          <select id="userRole">
+            <option>Admin</option>
+            <option>Financeiro</option>
+            <option>Visualizador</option>
+          </select>
+        </label>
+        <div class="perm-checks">
+          <label><input type="checkbox" value="dashboard" checked /> Visão Financeira Gerencial</label>
+          <label><input type="checkbox" value="resultados" /> Resultados</label>
+          <label><input type="checkbox" value="documentos" /> Documentos</label>
+          <label><input type="checkbox" value="conhecimento" checked /> Tutorial</label>
+          <label><input type="checkbox" value="configuracoes" /> Configurações</label>
+          <label><input type="checkbox" value="chat" /> Chat CFO</label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="userCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="userSubmit" class="btn-primary">Enviar convite</button>
+        </div>
+        <p class="error" id="userError" style="margin-top:8px"></p>
+        <p id="userSuccess" style="display:none;color:var(--mint);margin-top:8px;font-size:13px;text-align:center"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit user modal (settings) -->
+  <div id="editUserModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct" id="editUserModalTitle">Editar usuário</div>
+        <button id="editUserModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="editUserForm" novalidate>
+        <label>Papel
+          <select id="editUserRole">
+            <option>Admin</option>
+            <option>Financeiro</option>
+            <option>Visualizador</option>
+          </select>
+        </label>
+        <div class="perm-checks" id="editUserPermChecks">
+          <label><input type="checkbox" value="dashboard" /> Visão Financeira Gerencial</label>
+          <label><input type="checkbox" value="resultados" /> Resultados</label>
+          <label><input type="checkbox" value="documentos" /> Documentos</label>
+          <label><input type="checkbox" value="conhecimento" /> Tutorial</label>
+          <label><input type="checkbox" value="configuracoes" /> Configurações</label>
+          <label><input type="checkbox" value="chat" /> Chat CFO</label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="editUserCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="editUserSubmit" class="btn-primary">Salvar alterações</button>
+        </div>
+        <p class="error" id="editUserError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="viewModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct" id="viewModalTitle">Nova visão</div>
+        <button id="viewModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="viewForm" novalidate>
+        <div class="form-field">
+          <label class="form-label">Nome da visão</label>
+          <input type="text" id="viewName" class="form-input" placeholder="Ex: Operação BR" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Empresas neste recorte</label>
+          <div id="viewCompaniesGrid" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+          <div class="cs" id="viewCompaniesHint" style="margin-top:8px">Escolha ao menos uma empresa.</div>
+        </div>
+        <button type="submit" class="btn-primary" id="viewSubmit" style="width:100%;margin-top:4px">Salvar visão</button>
+        <p class="error" id="viewError" style="margin-top:8px"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- FATURAMENTO -->
+  <div class="page bl-pane" id="s4">
+    <div id="billingBody">
+      <p class="bl-empty">Carregando…</p>
+    </div>
+  </div>
+
+  </div><!-- /.app-main -->
+  </div><!-- /.app-layout -->
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js"></script>
+  <script src="vendor/xlsx.full.min.js?v=0.18.5"></script>
+  <script src="supabase-client.js"></script>
+  <script src="platform.js?v=20260927-1"></script>
+  <script src="chat-widget.js"></script>
+  <script src="settings.js?v=20261016-1"></script>
+</body>
+</html>

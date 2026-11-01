@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>
+    if (location.protocol === "http:" && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+      location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProFin Lab</title>
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    #welcomeOverlay {
+      position: fixed; inset: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      background: rgba(5,5,10,0);
+      backdrop-filter: blur(0px);
+      transition: background .35s ease, backdrop-filter .35s ease;
+      pointer-events: none;
+    }
+    #welcomeOverlay.open {
+      background: rgba(5,5,10,.65);
+      backdrop-filter: blur(5px);
+      pointer-events: auto;
+    }
+    #welcomeCard {
+      position: relative;
+      background: linear-gradient(160deg, rgba(22,22,30,.98), rgba(14,14,20,.98));
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 30px 32px 26px;
+      max-width: 440px; width: 100%;
+      box-shadow: 0 40px 80px -30px rgba(0,0,0,.75);
+      opacity: 0; transform: scale(.92) translateY(14px);
+      transition: opacity .4s cubic-bezier(.2,.9,.3,1.3), transform .4s cubic-bezier(.2,.9,.3,1.3);
+      overflow: hidden;
+    }
+    #welcomeOverlay.open #welcomeCard { opacity: 1; transform: scale(1) translateY(0); }
+    #welcomeCard::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #5b9dff, #9b86fb, #2dd4a0, #5b9dff);
+      background-size: 300% 100%;
+      animation: welcome-shimmer 3.5s linear infinite;
+    }
+    @keyframes welcome-shimmer { to { background-position: -300% 0; } }
+    .welcome-emoji {
+      font-size: 32px; line-height: 1; margin-bottom: 14px;
+      animation: welcome-pop .5s cubic-bezier(.3,1.5,.4,1) .15s both;
+    }
+    @keyframes welcome-pop { from { transform: scale(0) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+    .welcome-title { font-size: 20px; font-weight: 800; letter-spacing: -.2px; color: var(--ink); margin: 0 0 6px; }
+    .welcome-sub { font-size: 13.5px; color: var(--ink2); margin: 0 0 20px; line-height: 1.5; }
+    .welcome-tips { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+    .welcome-tips li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink2); line-height: 1.5; }
+    .welcome-tips .wt-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; background: rgba(155,134,251,.15); }
+    #welcomeCloseX { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 4px; line-height: 1; }
+    #welcomeCloseX:hover { color: var(--ink); }
+  </style>
+</head>
+<body class="dashboard-page">
+
+  <div id="appTopbar" class="app-topbar">
+    <div id="appTopbarEnv" class="app-topbar-env"></div>
+    <div class="app-topbar-brand">
+      <img src="profinlab-logo-compact.png" alt="ProFin Lab" style="height:22px;width:auto;display:block" />
+    </div>
+    <div class="app-topbar-actions">
+      <button id="topbarSettingsBtn" class="topbar-icon-btn" title="Configurações" aria-label="Configurações" style="display:none">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M19.14 12.94a7.14 7.14 0 000-1.88l2.03-1.58a.5.5 0 00.12-.64l-1.92-3.32a.5.5 0 00-.6-.22l-2.39.96a7.03 7.03 0 00-1.62-.94l-.36-2.54a.5.5 0 00-.5-.42h-3.84a.5.5 0 00-.5.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 00-.6.22L2.71 8.84a.5.5 0 00.12.64l2.03 1.58a7.14 7.14 0 000 1.88l-2.03 1.58a.5.5 0 00-.12.64l1.92 3.32c.14.24.42.32.6.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.26.42.5.42h3.84c.24 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.24.1.46 0 .6-.22l1.92-3.32a.5.5 0 00-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1112 8.5a3.5 3.5 0 010 7z"/></svg>
+      </button>
+      <button id="topbarLogoutBtn" class="topbar-logout-btn">Sair</button>
+    </div>
+  </div>
+
+  <!-- Faixa de cobrança em atraso. Fica no shell, e não nas páginas, para
+       seguir o usuário por todas as telas: quem está em atraso não abre
+       Faturamento por conta própria. -->
+  <div id="billingBannerSlot"></div>
+
+  <div class="app-layout">
+    <aside id="sidebarNav" class="sidebar"></aside>
+    <div class="app-main">
+      <iframe id="contentFrame" name="contentFrame" class="content-frame"></iframe>
+      <div id="billingBlocked" style="display:none;padding:56px 24px">
+        <div class="bl-pane" style="max-width:440px;margin:0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:17px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,107,107,.15);color:#ff8a8a">&#128274;</div>
+          <h2 class="sg-head" style="font-size:22px">Acesso suspenso</h2>
+          <p class="sg-lede">A cobrança da assinatura não foi confirmada dentro do prazo. Nada foi apagado — assim que o pagamento for regularizado, o acesso volta com todo o histórico.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="welcomeOverlay">
+    <div id="welcomeCard">
+      <button id="welcomeCloseX" aria-label="Fechar">✕</button>
+      <div class="welcome-emoji">👋</div>
+      <div class="welcome-title" id="welcomeTitle">Bem-vindo(a)!</div>
+      <p class="welcome-sub" id="welcomeSub">Aqui vai um resumo rápido do que você pode fazer por aqui.</p>
+      <ul class="welcome-tips">
+        <li><span class="wt-icon">📄</span><span>Envie balancetes em <strong style="color:var(--ink)">Documentos</strong> — a IA extrai e classifica os dados automaticamente.</span></li>
+        <li><span class="wt-icon">📊</span><span>Acompanhe DRE, Balanço e Fluxo de Caixa consolidados em <strong style="color:var(--ink)">Resultados Financeiros</strong>.</span></li>
+        <li><span class="wt-icon">💬</span><span>Tire dúvidas a qualquer momento com o <strong style="color:var(--ink)">CFO Copiloto</strong>.</span></li>
+      </ul>
+      <button id="welcomeCta" class="btn-primary" style="width:100%">Vamos começar →</button>
+    </div>
+  </div>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js"></script>
+  <script src="platform.js?v=20260927-1"></script>
+  <script src="chat-widget.js"></script>
+  <script>
+    (async function () {
+      const session = await requireOrgSession();
+      if (!session) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const startPage = params.get("page") || "dashboard.html";
+      const frame = document.getElementById("contentFrame");
+
+      renderAppShell(startPage, session);
+
+      // O recorte de empresas ativo. Guardado aqui porque é o shell que
+      // monta a URL do iframe — a página de conteúdo apenas lê o ?view= que
+      // recebe, sem precisar conversar com o shell.
+      let activeViewId = null;
+      // The CFO Copiloto widget is parked for now — the sidebar slot it used to
+      // occupy shows connection health instead. Restoring it is a one-line
+      // change (chat-widget.js is untouched and still loaded below).
+      renderAccountHealth(session);
+
+      // Cobrança em atraso: a faixa aparece em todas as telas; passado o prazo
+      // de carência, as telas de dados saem da frente e sobra o recado. É um
+      // bloqueio de interface, não de banco — ver o comentário em platform.js.
+      renderBillingBanner(session).then((access) => {
+        if (access !== "blocked") return;
+        const blocked = document.getElementById("billingBlocked");
+        if (frame) frame.style.display = "none";
+        if (blocked) blocked.style.display = "";
+        const nav = document.getElementById("sidebarNav");
+        if (nav) nav.querySelector(".sidebar-links")?.setAttribute("style", "opacity:.32;pointer-events:none");
+      });
+
+      // ── Welcome popup — once per user per browser (localStorage) ───────────
+      (function maybeShowWelcome() {
+        const key = `cfo4u-welcome-seen:${session.id}`;
+        if (localStorage.getItem(key)) return;
+
+        const overlay = document.getElementById("welcomeOverlay");
+        const titleEl = document.getElementById("welcomeTitle");
+        const subEl   = document.getElementById("welcomeSub");
+        const firstName = (session.name || session.email || "").split(" ")[0];
+
+        titleEl.textContent = firstName ? `Bem-vindo(a), ${firstName}!` : "Bem-vindo(a)!";
+        subEl.textContent = session.orgName
+          ? `Aqui está um resumo rápido do que você pode fazer no ambiente de ${session.orgName}.`
+          : "Aqui está um resumo rápido do que você pode fazer por aqui.";
+
+        function dismiss() {
+          overlay.classList.remove("open");
+          localStorage.setItem(key, "1");
+          setTimeout(() => { overlay.style.display = "none"; }, 400);
+        }
+
+        document.getElementById("welcomeCta").addEventListener("click", dismiss);
+        document.getElementById("welcomeCloseX").addEventListener("click", dismiss);
+        overlay.addEventListener("click", (e) => { if (e.target === overlay) dismiss(); });
+        document.addEventListener("keydown", function escHandler(e) {
+          if (e.key === "Escape") { dismiss(); document.removeEventListener("keydown", escHandler); }
+        });
+
+        // Small delay so the entrance transition is visible instead of appearing instantly on load
+        setTimeout(() => overlay.classList.add("open"), 350);
+      })();
+
+      function highlight(page) {
+        document.querySelectorAll(".sidebar-link").forEach((a) => {
+          a.classList.toggle("active", a.getAttribute("href") === page);
+        });
+        const url = new URL(window.location.href);
+        url.searchParams.set("page", page);
+        if (activeViewId) url.searchParams.set("view", activeViewId);
+        else url.searchParams.delete("view");
+        window.history.replaceState({}, "", url);
+      }
+
+      // O ?view= entra na src do iframe, e não num postMessage, porque assim a
+      // página de conteúdo já nasce com o recorte certo — em vez de renderizar
+      // com um recorte e corrigir depois, que pisca o número errado na tela.
+      // Espelha pageUrlWithView de src/domain/view.js, que é onde há teste.
+      function frameUrlFor(page) {
+        const [path, query] = String(page || "").split("?");
+        const params = new URLSearchParams(query || "");
+        if (activeViewId) params.set("view", activeViewId);
+        else params.delete("view");
+        const rest = params.toString();
+        return rest ? `${path}?${rest}` : path;
+      }
+
+      function navigate(page) {
+        frame.src = frameUrlFor(page);
+        highlight(page);
+      }
+
+      function currentPage() {
+        const src = frame.getAttribute("src") || startPage;
+        return src.split("?")[0];
+      }
+
+      // The sidebar's connection-health panel is rendered by platform.js, which
+      // has no access to this iframe. Exposing navigate lets it send the user
+      // straight to Configurações to fix a broken connection.
+      window.navigateShell = navigate;
+
+      document.getElementById("topbarSettingsBtn").addEventListener("click", () => navigate("settings.html"));
+      document.getElementById("topbarLogoutBtn").addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = "index.html";
+      });
+
+      frame.addEventListener("load", () => frame.classList.add("loaded"));
+      window.addEventListener("message", (event) => {
+        if (event.source !== frame.contentWindow) return;
+        if (!event.data || event.data.type !== "fp-nav") return;
+        highlight(event.data.page);
+      });
+
+      // O seletor só aparece quando a organização tem mais de uma visão. A
+      // primeira renderização precisa acontecer antes de montar o iframe, para
+      // ele já abrir no recorte certo.
+      const initialView = await renderViewSwitcher(session, (viewId) => {
+        activeViewId = viewId;
+        navigate(currentPage());
+      });
+      if (initialView) activeViewId = initialView.id;
+
+      frame.src = frameUrlFor(startPage);
+      highlight(startPage);
+    })();
+  </script>
+</body>
+</html>

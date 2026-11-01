@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      if (window.top === window) {
+        location.replace("app-shell.html?page=" + encodeURIComponent(location.pathname.split("/").pop()));
+        return;
+      }
+      document.documentElement.classList.add("in-frame");
+      window.top.postMessage({ type: "fp-nav", page: location.pathname.split("/").pop() }, window.location.origin);
+    })();
+  </script>
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Documentos — ProFin Lab</title>
+  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .doc-row-clickable { cursor: pointer; }
+    .doc-row-clickable:hover td { background: rgba(255,255,255,.025); }
+    .btn-row-menu {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 15px; font-weight: 700;
+      padding: 3px 8px; border-radius: 5px; line-height: 1;
+      letter-spacing: 1px; font-family: inherit;
+    }
+    .btn-row-menu:hover { background: rgba(255,255,255,.09); color: var(--ink); }
+    .btn-open-doc {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 14px; font-weight: 700;
+      padding: 3px 8px; border-radius: 5px; line-height: 1;
+      font-family: inherit;
+    }
+    .btn-open-doc:hover { background: rgba(124,92,252,.12); color: var(--accent); }
+    .btn-open-doc:disabled { opacity: .3; cursor: default; }
+    .btn-open-doc:disabled:hover { background: none; color: var(--muted); }
+    .doc-menu-item {
+      display: block; width: 100%; text-align: left;
+      background: none; border: none; cursor: pointer;
+      padding: 9px 16px; font-size: 13px; color: var(--ink2);
+      font-family: inherit; white-space: nowrap;
+    }
+    .doc-menu-item:hover { background: rgba(255,255,255,.07); color: var(--ink); }
+    .doc-menu-danger { color: #ff6b6b !important; }
+    .doc-menu-danger:hover { background: rgba(255,107,107,.1) !important; }
+  </style>
+</head>
+<body class="dashboard-page">
+
+  <div class="app-layout">
+  <aside id="sidebarNav" class="sidebar"></aside>
+  <div class="app-main">
+
+  <div class="topbar">
+    <div class="sub-row">
+      <div>
+        <h1>Documentos</h1>
+        <div class="sub">Envie PDFs e documentos — a IA analisa o conteúdo e extrai dados financeiros automaticamente</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page active">
+
+    <!-- ── BALANCETES ── -->
+    <div class="card" style="margin-bottom:18px">
+      <div class="ch">
+        <div><div class="ct">Balancetes</div><div class="cs" id="balanceteCountSub">Carregando…</div></div>
+        <button class="btn-primary add-doc-group-btn" data-type="Balancete" style="padding:6px 14px;font-size:12px">+ Adicionar balancete</button>
+      </div>
+      <table class="saldo-table list-table">
+        <thead><tr>
+          <th style="text-align:left">Documento</th>
+          <th style="text-align:left">Período</th>
+          <th style="text-align:left">Descrição</th>
+          <th>Enviado por</th>
+          <th>Data</th>
+          <th>Status</th>
+          <th></th>
+          <th></th>
+        </tr></thead>
+        <tbody id="balanceteTbodyRows"></tbody>
+      </table>
+    </div>
+
+    <!-- ── EXTRATOS BANCÁRIOS (em breve) ── -->
+    <div class="card" style="margin-bottom:18px;opacity:.55;pointer-events:none">
+      <div class="ch">
+        <div><div class="ct">Extratos Bancários</div><div class="cs">Em breve · via Open Finance</div></div>
+        <span class="illus-tag">Em breve</span>
+      </div>
+    </div>
+
+    <!-- ── OUTROS DOCUMENTOS (em breve) ── -->
+    <div class="card" style="opacity:.55;pointer-events:none">
+      <div class="ch">
+        <div><div class="ct">Outros documentos</div><div class="cs">Em breve</div></div>
+        <span class="illus-tag">Em breve</span>
+      </div>
+    </div>
+
+  </div>
+
+  </div>
+  </div>
+
+  <!-- ── UPLOAD MODAL ── -->
+  <div id="docModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="ct" id="docModalTitle">Adicionar documento</div>
+        <button id="docModalClose" class="chat-close">✕</button>
+      </div>
+      <form id="docForm">
+        <div id="docFileRow">
+          <label>Arquivo (PDF recomendado)
+            <input type="file" id="docFile" accept=".pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg" />
+          </label>
+        </div>
+        <label>Nome do documento<input type="text" id="docName" placeholder="Ex: Balancete 01/2026.pdf" required /></label>
+
+        <!-- Fixed type (Balancete or Extrato) -->
+        <div id="docTypeFixedRow" style="display:none">
+          <label>Tipo
+            <div id="docTypeFixedLabel" style="padding:8px 12px;margin-top:4px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;font-size:13px;opacity:.7"></div>
+          </label>
+        </div>
+
+        <!-- Type selector for "outros" -->
+        <div id="docTypeSelectRow" style="display:none">
+          <label>Tipo
+            <select id="docType">
+              <option>Balanço</option>
+              <option>DRE</option>
+              <option>Planilha orçamentária</option>
+              <option>Contrato</option>
+              <option>Nota fiscal</option>
+              <option>Outro</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Period -->
+        <div style="display:flex;gap:12px">
+          <label style="flex:1">Período (início)
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <select id="docPeriodoInicioMes" style="flex:1">
+                <option value="">Mês</option>
+                <option value="01">Janeiro</option>
+                <option value="02">Fevereiro</option>
+                <option value="03">Março</option>
+                <option value="04">Abril</option>
+                <option value="05">Maio</option>
+                <option value="06">Junho</option>
+                <option value="07">Julho</option>
+                <option value="08">Agosto</option>
+                <option value="09">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+              <select id="docPeriodoInicioAno" style="flex:1">
+                <option value="">Ano</option>
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+              </select>
+            </div>
+          </label>
+          <label style="flex:1">Período (fim) <span style="font-size:11px;color:var(--muted);font-weight:400">(opcional)</span>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <select id="docPeriodoFimMes" style="flex:1">
+                <option value="">Mês</option>
+                <option value="01">Janeiro</option>
+                <option value="02">Fevereiro</option>
+                <option value="03">Março</option>
+                <option value="04">Abril</option>
+                <option value="05">Maio</option>
+                <option value="06">Junho</option>
+                <option value="07">Julho</option>
+                <option value="08">Agosto</option>
+                <option value="09">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+              <select id="docPeriodoFimAno" style="flex:1">
+                <option value="">Ano</option>
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+              </select>
+            </div>
+          </label>
+        </div>
+
+        <label>Descrição <span class="hint">(contexto que a IA usa na análise)</span>
+          <textarea id="docDescription" rows="3" placeholder="Ex: Balancete de verificação referente a janeiro de 2026." required></textarea>
+        </label>
+        <div id="docUploadProgress" style="display:none" class="doc-upload-progress">
+          <div class="doc-upload-bar"><div id="docUploadFill" class="doc-upload-fill"></div></div>
+          <span id="docUploadLabel">Enviando...</span>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="docCancel" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="docSubmit" class="btn-primary">Salvar e analisar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── ANALYSIS DETAIL MODAL ── -->
+  <div id="analysisModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal modal-analysis">
+      <div class="modal-head">
+        <div>
+          <div class="ct" id="analysisMTitle">Análise do documento</div>
+          <div class="cs" id="analysisMPeriod"></div>
+          <div id="analysisMDocLink"></div>
+        </div>
+        <button id="analysisModalClose" class="chat-close">✕</button>
+      </div>
+      <div id="analysisContent"></div>
+    </div>
+  </div>
+
+  <!-- ── DELETE CONFIRMATION MODAL ── -->
+  <div id="deleteModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-head">
+        <div class="ct">Apagar documento</div>
+        <button id="deleteModalClose" class="chat-close">✕</button>
+      </div>
+      <p style="color:var(--ink2);font-size:14px;margin:0 0 6px">Tem certeza que deseja apagar <strong id="deleteDocName"></strong>?</p>
+      <p style="color:var(--muted);font-size:12.5px;margin:0 0 20px">Esta ação também remove a análise vinculada e não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button type="button" id="deleteCancelBtn" class="btn-secondary">Cancelar</button>
+        <button type="button" id="deleteConfirmBtn" class="btn-danger">Apagar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW ACTION DROPDOWN ── -->
+  <div id="docRowMenu" style="display:none;position:fixed;z-index:9999;background:#1b1d27;border:1px solid rgba(255,255,255,.13);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:176px;padding:4px 0">
+    <button id="menuViewAnalysis" class="doc-menu-item">Ver análise</button>
+    <button id="menuReextract" class="doc-menu-item">Refazer extração IA</button>
+    <button id="menuReclassify" class="doc-menu-item">Refazer classificação IA</button>
+    <div style="height:1px;background:rgba(255,255,255,.08);margin:4px 0"></div>
+    <button id="menuEdit" class="doc-menu-item">Editar</button>
+    <button id="menuDelete" class="doc-menu-item doc-menu-danger">Apagar</button>
+  </div>
+
+  <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+  <script src="supabase-client.js"></script>
+  <script src="platform.js?v=20260927-1"></script>
+  <script src="chat-widget.js"></script>
+  <script src="documents.js?v=9"></script>
+</body>
+</html>

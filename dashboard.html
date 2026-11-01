@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+  <script>
+    (function () {
+      if (window.top === window) {
+        location.replace("app-shell.html?page=" + encodeURIComponent(location.pathname.split("/").pop()));
+        return;
+      }
+      document.documentElement.classList.add("in-frame");
+      window.top.postMessage({ type: "fp-nav", page: location.pathname.split("/").pop() }, window.location.origin);
+    })();
+  </script>
+  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
+  <title>Visão Financeira Gerencial — ProFin Lab</title>
+  <link rel="stylesheet" href="style.css?v=20261019-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="vendor/chart.umd.min.js?v=4.4.1"></script>
+</head>
+
+<body class="dashboard-page">
+
+  <div class="app-layout">
+    <aside id="sidebarNav" class="sidebar"></aside>
+    <div class="app-main">
+
+
+      <div class="topbar">
+        <div class="sub-row">
+          <div>
+            <h1>Visão Financeira Gerencial</h1>
+            <div class="sub" id="periodSub">Visão executiva · Período: 01/04/26 a 30/04/26</div>
+          </div>
+          <div class="sync" id="dashboardSyncStatus">
+            <span class="dot"></span>
+            <span id="dashboardSyncStatusText">Verificando sincronização...</span>
+            <button id="dashboardRefreshBtn" class="btn-secondary" style="font-size:11px;padding:4px 10px;margin-left:6px" title="Buscar dados novos agora">Atualizar</button>
+          </div>
+        </div>
+
+        <div class="filterbar">
+          <div class="chiprow" id="quickRanges">
+            <button class="chipbtn" data-range="hoje">Hoje</button>
+            <button class="chipbtn" data-range="semana">Esta semana</button>
+            <button class="chipbtn on" data-range="mes">Este mês</button>
+            <button class="chipbtn" data-range="mes-passado">Último mês</button>
+            <button class="chipbtn" data-range="trimestre">Trimestre</button>
+            <button class="chipbtn" data-range="ytd">YTD</button>
+            <button class="chipbtn" data-range="12m">12 meses</button>
+          </div>
+          <div class="daterow">
+            <label for="ofDateFrom">De</label>
+            <input type="date" id="ofDateFrom" class="dateinput" />
+            <label for="ofDateTo">até</label>
+            <input type="date" id="ofDateTo" class="dateinput" />
+            <button id="ofDateClear" class="chipbtn" type="button" title="Voltar para o período rápido selecionado">Limpar</button>
+          </div>
+        </div>
+      </div>
+
+      <nav class="tabnav">
+        <div class="tab active" onclick="goTab(0,this)">Visão geral</div>
+        <div class="tab" onclick="goTab(1,this)">Open Finance</div>
+        <div class="tab" onclick="goTab(2,this)">Projeção 13 Semanas</div>
+        <div class="tab" onclick="goTab(3,this)">Orçado vs Realizado</div>
+        <div class="tab" id="cvTab" onclick="goTab(4,this)" hidden>Fluxo de caixa</div>
+      </nav>
+
+      <!-- PAGE 1 — VISÃO GERAL -->
+      <div class="page active" id="p0">
+        <div class="kpi-row" id="p0-kpis"></div>
+
+        <div class="card" id="p0CardBanco" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Posição por banco</div>
+              <div class="cs">Saldo consolidado atual via Open Finance</div>
+            </div>
+            <span class="illus-tag" id="bankListTag">Open Finance</span>
+          </div>
+          <div class="bank-list" id="bankList"></div>
+        </div>
+
+        <div class="card" id="p0CardNatureza" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Posição por Natureza</div>
+              <div class="cs">Classificação das transações Open Finance</div>
+            </div>
+          </div>
+          <table class="saldo-table" id="p0-nat-table"></table>
+        </div>
+
+        <div class="card" id="p0CardCluster" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Distribuição por cluster</div>
+              <div class="cs">Total movimentado por cluster de fornecedor no período — clique em uma barra para ver o detalhe</div>
+              <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+                <input type="checkbox" id="ofClusterShowEntradas" checked>
+                Incluir Entradas
+              </label>
+              <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer">
+                <input type="checkbox" id="ofClusterShowTransfers" checked>
+                Incluir transferências entre contas próprias
+              </label>
+            </div>
+          </div>
+          <div style="position:relative;width:100%;height:340px;margin-top:6px">
+            <canvas id="c-p0-cluster"></canvas>
+          </div>
+          <div id="p0ClusterDetail" style="display:none;margin-top:18px">
+            <div class="ch" style="margin-bottom:10px">
+              <div>
+                <div class="ct" id="p0ClusterDetailTitle" style="font-size:13px">Transações do cluster</div>
+              </div>
+              <button id="p0ClusterDetailClose" class="btn-secondary" style="font-size:12px">Fechar</button>
+            </div>
+            <div id="p0ClusterDetailBody"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Saldo Consolidado</div>
+              <div class="cs">Histórico estimado com base nas transações Open Finance no período selecionado</div>
+            </div>
+          </div>
+          <div style="position:relative;width:100%;height:340px;margin-top:6px">
+            <canvas id="c-p0-saldo"></canvas>
+          </div>
+        </div>
+
+        <div class="card-row cols-2" style="margin-bottom:18px">
+          <div class="card">
+            <div class="ch">
+              <div>
+                <div class="ct">Entradas e Saídas <span style="font-weight:400;color:var(--muted)">— por sentido</span></div>
+                <div class="cs">Barras agrupadas com linha de movimentação líquida (eixo direito)</div>
+              </div>
+            </div>
+            <div style="position:relative;width:100%;height:230px;margin-top:6px">
+              <canvas id="c-p1-combo"></canvas>
+            </div>
+            <div class="legend">
+              <div class="li"><div class="ld" style="background:var(--green)"></div>Entradas</div>
+              <div class="li"><div class="ld" style="background:#ff8a5b"></div>Saídas</div>
+              <div class="li"><div class="ll" style="background:var(--ink)"></div>Líquido</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ch">
+              <div>
+                <div class="ct">Fluxo por Natureza <span style="font-weight:400;color:var(--muted)">— DFC método direto</span></div>
+                <div class="cs" id="p1-ytd-line">Carregando...</div>
+              </div>
+            </div>
+            <div style="position:relative;width:100%;height:230px;margin-top:6px">
+              <canvas id="c-p1-dfc"></canvas>
+            </div>
+            <div class="legend">
+              <div class="li"><div class="ld" style="background:var(--fco)"></div>Operacional (FCO)</div>
+              <div class="li"><div class="ld" style="background:var(--fci)"></div>Investimento (FCI)</div>
+              <div class="li"><div class="ld" style="background:var(--fcf)"></div>Financiamento (FCF)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 2 — OPEN FINANCE -->
+      <div class="page" id="p1">
+        <!-- Slot for the pending-classification notice. It lives on this tab
+             rather than Visão Geral: that view is the executive summary, and a
+             caveat about processing state belongs where the Open Finance data
+             itself is being inspected. -->
+        <div id="ofCashflowPendingSlot"></div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Resumo Open Finance</div>
+              <div class="cs" id="openFinanceSummarySub">Entradas e saídas no período selecionado</div>
+            </div>
+          </div>
+          <div id="openFinanceSummary"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Últimas transações Open Finance</div>
+              <div class="cs" id="openFinanceTransactionsSub">Movimentações importadas das contas conectadas</div>
+              <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+                <input type="checkbox" id="ofShowOnlyUnclassified">
+                Mostrar apenas não classificadas
+              </label>
+            </div>
+            <div style="text-align:right;display:flex;align-items:center;gap:8px">
+              <button id="btnExportTransactions" class="btn-secondary" style="font-size:12px" title="Baixar as transações do período em planilha">⬇ Baixar Excel</button>
+              <button id="btnGroupTransactions" class="btn-secondary" style="font-size:12px">Agrupar</button>
+              <div>
+                <button id="btnClassifyTransactions" class="btn-secondary" style="font-size:12px">Classificar transações</button>
+                <button id="btnCancelClassification" class="btn-secondary" style="font-size:12px;display:none;color:#ff6b6b;border-color:rgba(255,107,107,.4)">Parar classificação</button>
+                <div id="classifyProgressStatus" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+              </div>
+            </div>
+          </div>
+          <div style="max-height:560px;overflow:auto">
+            <table class="saldo-table" id="openFinanceTransactionsTable"></table>
+          </div>
+          <div id="openFinanceTransactionsPagination"></div>
+        </div>
+      </div>
+
+      <!-- PAGE 3 — PROJEÇÃO 13 SEMANAS -->
+      <div class="page" id="p2">
+        <div class="cycle-info" id="p2-cycle"></div>
+        <div class="card-row cols-2-1">
+          <div class="card">
+            <div class="ch">
+              <div>
+                <div class="ct">Projeção de Caixa · 13 Semanas</div>
+                <div class="cs">Estimativa baseada no histórico real Open Finance</div>
+              </div>
+              <span class="illus-tag">Open Finance</span>
+            </div>
+            <div style="position:relative;width:100%;height:340px">
+              <canvas id="c-p2-rolling"></canvas>
+            </div>
+            <div class="legend">
+              <div class="li"><div class="ld" style="background:var(--green)"></div>Entradas projetadas</div>
+              <div class="li"><div class="ld" style="background:#ff8a5b"></div>Saídas projetadas</div>
+              <div class="li"><div class="ll" style="background:var(--blue)"></div>Saldo projetado</div>
+              <div class="li"><div class="ll" style="background:var(--red);border-top:2px dashed var(--red);height:0;width:20px"></div>Piso temporário</div>
+            </div>
+            <div id="openFinanceProjectionTable" style="margin-top:18px;overflow-x:auto;width:100%"></div>
+          </div>
+          <div class="callout" id="p2-callout"></div>
+        </div>
+      </div>
+
+      <!-- PAGE 4 — ORÇADO VS REALIZADO -->
+      <div class="page" id="p3">
+        <div class="week-btns" id="p3-weeks"></div>
+        <div class="desvio-grid" id="p3-kpis"></div>
+        <div class="card-row cols-2">
+          <div class="card">
+            <div class="ch">
+              <div>
+                <div class="ct">Decomposição do Desvio</div>
+                <div class="cs" id="p3-decomp-sub">FCO · FCI · FCF</div>
+              </div>
+            </div>
+            <table class="decomp-table">
+              <thead><tr><th>Natureza</th><th>Comentário</th><th>Orçado</th><th>Realizado / Δ</th></tr></thead>
+              <tbody id="p3-tbody"></tbody>
+            </table>
+            <div class="leitura" id="p3-leitura"></div>
+          </div>
+          <div class="card">
+            <div class="ch">
+              <div>
+                <div class="ct">Entradas vs Saídas</div>
+                <div class="cs" id="p3-chart-sub">Previsto vs Realizado</div>
+              </div>
+            </div>
+            <canvas id="c-p3-bar" height="200"></canvas>
+            <div style="margin-top:20px">
+              <div class="ch" style="margin-bottom:10px"><div><div class="ct" style="font-size:13px">Evolução do Saldo — 5 Semanas</div></div></div>
+              <canvas id="c-p3-saldo" height="140"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 5 — FLUXO DE CAIXA (aparece quando cash_view_enabled está ligado; ver cashflow-view.js) -->
+      <div class="page" id="p4">
+        <div class="cv-toolbar">
+          <div class="cs" id="cvPeriodLabel">Período selecionado acima</div>
+          <div class="chiprow" id="cvGranularity" role="group" aria-label="Quebra do gráfico">
+            <button class="chipbtn" type="button" data-g="day">Dia</button>
+            <button class="chipbtn" type="button" data-g="week">Semana</button>
+            <button class="chipbtn" type="button" data-g="month">Mês</button>
+            <button class="chipbtn" type="button" data-g="year">Ano</button>
+          </div>
+        </div>
+
+        <div class="cv-focus" id="cvFocus" hidden>
+          <span id="cvFocusText"></span>
+          <button class="btn-secondary" type="button" id="cvFocusClear">Ver o período todo</button>
+        </div>
+
+        <div class="cv-cards" id="cvCards"></div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Saldo, entradas e saídas</div>
+              <div class="cs">Saldo dos bancos no fim de cada intervalo · clique numa barra para detalhar o intervalo</div>
+            </div>
+            <div class="cv-legend">
+              <span><i style="background:#2dd4a0"></i>Entradas</span>
+              <span><i style="background:#ff8a5b"></i>Saídas</span>
+              <span><i class="cv-line"></i>Saldo</span>
+            </div>
+          </div>
+          <div style="position:relative;width:100%;height:320px;margin-top:6px">
+            <canvas id="c-cv-fluxo"></canvas>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Posição por banco e conta</div>
+              <div class="cs">Clique no banco para ver as contas</div>
+            </div>
+            <label class="cv-check"><input type="checkbox" id="cvAllAccounts"> Mostrar contas sem saldo nem movimento</label>
+          </div>
+          <div id="cvBanks"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="ch">
+            <div>
+              <div class="ct">Natureza</div>
+              <div class="cs">Entradas e saídas por natureza · clique para abrir os lançamentos</div>
+            </div>
+          </div>
+          <div id="cvNature"></div>
+        </div>
+
+        <div class="card-row cols-2" style="margin-bottom:18px">
+          <div class="card">
+            <div class="ch">
+              <div>
+                <div class="ct">Recebimentos</div>
+                <div class="cs" id="cvRecebimentosSub">Por quem pagou, do maior para o menor</div>
+              </div>
+            </div>
+            <div id="cvRecebimentos"></div>
+          </div>
+          <div class="card">
+            <div class="ch">
+              <div>
+                <div class="ct">Pagamentos</div>
+                <div class="cs" id="cvPagamentosSub">Por fornecedor, do maior para o menor</div>
+              </div>
+            </div>
+            <div id="cvPagamentos"></div>
+          </div>
+        </div>
+      </div>
+      <!-- /PAGE 5 -->
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── EDIT TRANSACTION CLASSIFICATION MODAL ── -->
+  <div id="txEditModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-head">
+        <span style="font-weight:700;font-size:15px">Editar classificação</span>
+        <button class="btn-secondary" id="txEditModalClose" style="padding:4px 10px;font-size:12px">✕</button>
+      </div>
+      <p id="txEditDescription" style="font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.5"></p>
+      <label>Fornecedor (opcional — para quando a origem não veio identificada)
+        <select id="txEditSupplier" class="form-input" style="margin-top:6px">
+          <option value="">— Não atribuir —</option>
+        </select>
+      </label>
+      <label style="margin-top:14px;display:block">Natureza (fluxo de caixa)
+        <select id="txEditNature" class="form-input" style="margin-top:6px">
+          <option value="">— Sem alteração —</option>
+        </select>
+      </label>
+      <label style="margin-top:14px;display:block">Cluster (plano de contas)
+        <select id="txEditCluster" class="form-input" style="margin-top:6px">
+          <option value="">— Sem alteração —</option>
+        </select>
+      </label>
+      <p style="font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.5">
+        Ao salvar, essa correção é aplicada a esta transação e registrada para que a IA use o mesmo
+        critério em futuras transações deste fornecedor.
+      </p>
+      <div id="txEditStatus" style="margin-top:8px;font-size:12.5px;color:var(--muted);min-height:18px"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="txEditCancelBtn">Cancelar</button>
+        <button class="btn-primary" id="txEditSaveBtn">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── IGNORED-BY-RULE TRANSACTIONS LIST MODAL ── -->
+  <div id="ignoredTxListModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:900px">
+      <div class="modal-head">
+        <span style="font-weight:700;font-size:15px">Transações ignoradas por regra</span>
+        <button class="btn-secondary" id="ignoredTxListModalClose" style="padding:4px 10px;font-size:12px">✕</button>
+      </div>
+      <p id="ignoredTxListSub" style="font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.5"></p>
+      <div style="max-height:60vh;overflow:auto">
+        <table class="saldo-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th style="text-align:left">Descrição</th>
+              <th style="text-align:left">Origem/Destino</th>
+              <th>Conta</th>
+              <th>Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ignoredTxListBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CLASSIFY MODE MODAL ── -->
+  <div id="classifyModeModalRoot" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-head">
+        <span style="font-weight:700;font-size:15px">Classificar transações</span>
+        <button class="btn-secondary" id="classifyModeModalClose" style="padding:4px 10px;font-size:12px">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.6">
+        Escolha o que classificar. Reprocessar tudo é mais lento e consome mais tokens de IA, mas também
+        reaplica correções e regras novas às transações já classificadas.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn-secondary" id="classifyModePending" style="text-align:left;padding:12px 14px">
+          <div style="font-weight:700;font-size:13px">Apenas pendentes</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px;font-weight:400">Classifica somente transações que ainda não têm natureza ou cluster. Mais rápido e econômico.</div>
+        </button>
+        <button class="btn-secondary" id="classifyModeAll" style="text-align:left;padding:12px 14px">
+          <div style="font-weight:700;font-size:13px">Classificar tudo</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px;font-weight:400">Reprocessa todas as transações do período, inclusive as já classificadas.</div>
+        </button>
+      </div>
+      <div id="classifyModeStatus" style="margin-top:12px;font-size:12.5px;color:var(--muted);min-height:18px"></div>
+    </div>
+  </div>
+
+    <script src="vendor/supabase.umd.js?v=2.112.4"></script>
+    <script src="supabase-client.js"></script>
+    <script src="platform.js?v=20260927-1"></script>
+    <script src="chat-widget.js"></script>
+    <script src="xlsx-writer.js?v=1"></script>
+    <script src="openfinance-dashboard.js?v=20261019-1"></script>
+    <script src="cashflow-view.js?v=20261019-1"></script>
+    <script>
+      (async function () {
+        const session = await requireOrgSession();
+        if (!session) return;
+
+        window.__lastOrgSession = session;
+
+        // Antes de qualquer pintura: a ordem dos cards é do HTML para quase
+        // todo mundo, e só a organização com layout congelado é reordenada.
+        if (typeof ofApplyDashboardLayout === "function") {
+          ofApplyDashboardLayout(session);
+        }
+
+        renderAppShell("dashboard.html", session);
+        renderChatWidget();
+
+        // Aba "Fluxo de caixa": só aparece se a organização tiver a visão
+        // ligada. Não espera — a pintura das outras abas não depende dela.
+        if (typeof cvSetupTab === "function") {
+          cvSetupTab(session);
+        }
+
+        // Render through the same path a tab switch uses, rather than naming
+        // painters here. This bootstrap used to call paintOpenFinanceDashboard
+        // and paintOpenFinanceEntradasSaidas directly, and when the cluster
+        // chart was later added to Visão Geral only the tab-switch path learned
+        // about it — so on a fresh load that chart stayed blank until the user
+        // happened to change tabs or the period. Deferring to ofRenderActiveTab
+        // keeps "what this tab needs" defined in exactly one place, so the two
+        // entry points cannot drift apart again.
+        if (typeof ofRefreshOpenFinanceActiveTab === "function") {
+          await ofRefreshOpenFinanceActiveTab();
+        }
+      })();
+    </script>
+</body>
+
+</html>
