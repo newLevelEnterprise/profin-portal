@@ -953,7 +953,7 @@ async function paintIntegrations(session) {
         </div>
 
         ${!enabled
-          ? `<div class="cs" style="color:var(--muted)">Integração não habilitada para sua organização. Fale com o time Profix para ativar.</div>`
+          ? `<div class="cs" style="color:var(--muted)">Integração não habilitada para sua organização. Fale com o time Nexus para ativar.</div>`
           : pluggy
           ? `
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -3044,7 +3044,7 @@ async function paintBillingSection(session) {
           <div class="bl-fact">
             <dt>${canceling ? "Acesso até" : "Próxima cobrança"}</dt>
             <dd class="${isExternal ? "" : "num"}">${isExternal
-              ? "Combinada com a ProFin Lab"
+              ? "Combinada com o Nexus"
               : escapeHtml(billingDate(subscription?.current_period_end))}</dd>
           </div>
           <div class="bl-fact">
@@ -3066,10 +3066,10 @@ async function paintBillingSection(session) {
             ${isExternal
               ? canStartCard
                 ? `<b>Cobrança por fora do portal</b>
-                   <p>Hoje a ProFin Lab envia o boleto por fora e nada vence aqui. Você pode passar a pagar
+                   <p>Hoje o Nexus envia o boleto por fora e nada vence aqui. Você pode passar a pagar
                       no cartão, com renovação automática — a mudança só vale depois do primeiro pagamento.</p>`
                 : `<b>Cobrança por fora do portal</b>
-                   <p>Hoje a ProFin Lab envia o boleto por fora e nada vence aqui. Para pagar no cartão é
+                   <p>Hoje o Nexus envia o boleto por fora e nada vence aqui. Para pagar no cartão é
                       preciso ter o CNPJ da empresa cadastrado — ele identifica o pagador e sai na nota
                       fiscal. Esse cadastro é feito pela nossa equipe: fale com o suporte e o pagamento no
                       cartão fica disponível aqui em seguida.</p>`

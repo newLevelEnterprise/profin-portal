@@ -1,4 +1,4 @@
-// logs.js — Profix Admin · execution logs (profix admins only)
+// logs.js — Nexus · execution logs (profix admins only)
 
 const ACTION_LABEL = {
   "analyze-document":       "Análise de doc.",
@@ -193,7 +193,7 @@ async function loadLogs() {
 
   if (!session.isProFixAdmin) {
     document.getElementById("logsContainer").innerHTML =
-      `<div style="text-align:center;padding:80px;color:var(--muted)">Acesso restrito a administradores Profix.</div>`;
+      `<div style="text-align:center;padding:80px;color:var(--muted)">Acesso restrito a administradores Nexus.</div>`;
     renderAppShell("logs.html", session);
     return;
   }

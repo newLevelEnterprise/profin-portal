@@ -8,10 +8,10 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
-  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
-  <title>Backoffice — Profix Admin</title>
-  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link rel="icon" href="nexus-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="nexus-icon-180.png">
+  <title>Backoffice — Nexus</title>
+  <link rel="stylesheet" href="style.css?v=20261109-1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     .token-org-row:hover td { background: rgba(255,255,255,.03); }
@@ -21,7 +21,7 @@
 <body class="dashboard-page admin-page">
 
   <header class="appbar admin-appbar">
-    <div class="appbar-brand"><span class="brand-mark admin-mark">PX</span>Profix Admin · Backoffice</div>
+    <div class="appbar-brand"><img src="nexus-symbol.png" alt="" class="brand-symbol" />Nexus</div>
     <div class="appbar-right">
       <span id="adminEmailDisplay"></span>
       <button id="adminLogoutBtn">Sair</button>
@@ -334,7 +334,7 @@
           <span class="hint">(quem emite a fatura desta organização)</span>
           <select id="editOrgBillingMode" class="form-input">
             <option value="portal">Pelo portal — assinatura no cartão via Asaas</option>
-            <option value="external">Por fora — boleto enviado pela ProFin Lab</option>
+            <option value="external">Por fora — boleto enviado pelo Nexus</option>
           </select>
         </label>
         <p class="cs" style="margin:-4px 0 4px">Em "por fora", o portal não mostra aviso de atraso nem bloqueia o acesso: ele não recebe confirmação de pagamento.</p>

@@ -107,7 +107,7 @@ function renderAppShell(activePage, session) {
       <div id="accountHealthSlot"></div>
       <div class="sidebar-footer">
         <div class="powered-by">
-          <img src="profixlab-logo-C_ZWrEgP.png" alt="ProfixLab" class="profix-logo-img" />
+          <img src="nexus-logo.png" alt="Nexus" class="profix-logo-img" />
           <span class="powered-by-text">powered by</span>
         </div>
       </div>

@@ -8,16 +8,16 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="profinlab-icon-64.png" type="image/png">
-  <link rel="apple-touch-icon" href="profinlab-icon-180.png">
-  <title>Painel Administrativo — Profix</title>
-  <link rel="stylesheet" href="style.css?v=20260923-1" />
+  <link rel="icon" href="nexus-icon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="nexus-icon-180.png">
+  <title>Painel administrativo — Nexus</title>
+  <link rel="stylesheet" href="style.css?v=20261109-1" />
 </head>
 <body class="login-page">
   <div class="login-wrapper">
     <div class="login-brand admin-brand">
-      <div class="brand-mark">PX</div>
-      <h1>Profix Admin</h1>
+      <img src="nexus-symbol.png" alt="" class="brand-symbol" />
+      <h1>Nexus</h1>
       <p>Backoffice interno — gestão das organizações, usuários, consumo e execuções da plataforma.</p>
       <ul class="brand-points">
         <li>Visão de todas as organizações</li>
@@ -28,11 +28,11 @@
 
     <div class="login-card">
       <h2>Acesso administrativo</h2>
-      <p class="login-sub">Restrito a contas marcadas como administradoras Profix.</p>
+      <p class="login-sub">Restrito a contas marcadas como administradoras Nexus.</p>
 
       <form id="adminLoginForm" novalidate>
         <label for="adminEmail">E-mail</label>
-        <input type="email" id="adminEmail" placeholder="voce@profixlab.com.br" required />
+        <input type="email" id="adminEmail" placeholder="voce@empresa.com" required />
 
         <label for="adminPassword">Senha</label>
         <div class="password-field">
@@ -100,7 +100,7 @@
 
       if (!profile || !profile.is_profix_admin) {
         await supabaseClient.auth.signOut();
-        errorEl.textContent = "Esta conta não tem acesso administrativo Profix.";
+        errorEl.textContent = "Esta conta não tem acesso administrativo Nexus.";
         return;
       }
 
